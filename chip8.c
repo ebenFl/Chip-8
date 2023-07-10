@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <SDL2/SDL.h>
 #include <time.h>
+#include <curses.h>
 
 /* INTERPRETER DATA*/
 
@@ -26,7 +27,7 @@ const uint32_t FONTSTART = 0x50;
 uint8_t registers[0x10] = {0};
 
 // 1 if key pressed else 0
-uint8_t keypad[16] = {0};
+uint8_t user_keypad[16] = {0};
 
 // chip-8 has 4096 bytes of memory
 // which translate to addresses ranging
@@ -62,6 +63,9 @@ uint16_t opcode = 0x0;
 uint8_t delay_timer = 0x0;
 uint8_t sound_timer = 0x0;
 
+// boolean to determine if system should be paused
+uint8_t prog_pause = 0x0;
+
 const uint32_t FONTSET_SIZE = 80;
 
 uint8_t fontset[80] =
@@ -90,28 +94,35 @@ uint8_t fontset[80] =
 
 void print_state()
 {
-    printf("======== SYSTEM STATE =========\n");
-    printf("Opcode: %4x                  |\n", opcode);
-    printf("-------------------------------\n");
-    printf("IndexRegister: %4x           |\n", index_register);
-    printf("-------------------------------\n");
-    printf("ProgramCounter: %4x          |\n", program_counter);
-    printf("-------------------------------\n");
-    printf("Register         Stack        |\n");
-    printf("-------------------------------\n");
+    if (prog_pause) {
+        printw("=================    PAUSED    ================\n");
+    }
+    else {
+        printw("\n");
+    }
+    printw("================= SYSTEM STATE ================\n");
+    printw("ProgramCounter: %4x           \n", program_counter);
+    printw("-----------------------------------------------\n");
+    printw("Opcode: %4x                                   \n", opcode);
+    printw("-----------------------------------------------\n");
+    printw("IndexRegister: %4x           \n", index_register);
+    printw("-----------------------------------------------\n");
+    printw("Register         Stack          Key     State  \n");
+    printw("-----------------------------------------------\n");
     for (int i = 0; i < 16; i++)
     {
-        printf("%-8x |", i);
+        printw("%-8x |", i);
         if (stack_pointer == i)
         {
-            printf(" %2x  | %4x  <----- |\n", registers[i], stack[i]);
+            printw(" %2x  | %4x  <----- | %-3x     %-5x \n", registers[i], stack[i], i, user_keypad[i]);
         }
         else
         {
-            printf(" %2x  | %4x         |\n", registers[i], stack[i]);
+            printw(" %2x  | %4x         | %-3x     %-5x \n", registers[i], stack[i], i, user_keypad[i]);
         }
     }
-    printf("===============================\n");
+    printw("===============================================\n");
+    refresh();
 }
 
 /* END DEBUG FUNCTIONS*/
@@ -126,7 +137,7 @@ SDL_Texture *texture = NULL;
 
 key setup
 
-Keypad       Keyboard
+user_keypad       Keyboard
 +-+-+-+-+    +-+-+-+-+
 |1|2|3|C|    |1|2|3|4|
 +-+-+-+-+    +-+-+-+-+
@@ -185,97 +196,97 @@ int g_poll()
 
             case SDLK_x:
             {
-                keypad[0] = 1;
+                user_keypad[0] = 1;
             }
             break;
 
             case SDLK_1:
             {
-                keypad[1] = 1;
+                user_keypad[1] = 1;
             }
             break;
 
             case SDLK_2:
             {
-                keypad[2] = 1;
+                user_keypad[2] = 1;
             }
             break;
 
             case SDLK_3:
             {
-                keypad[3] = 1;
+                user_keypad[3] = 1;
             }
             break;
 
             case SDLK_q:
             {
-                keypad[4] = 1;
+                user_keypad[4] = 1;
             }
             break;
 
             case SDLK_w:
             {
-                keypad[5] = 1;
+                user_keypad[5] = 1;
             }
             break;
 
             case SDLK_e:
             {
-                keypad[6] = 1;
+                user_keypad[6] = 1;
             }
             break;
 
             case SDLK_a:
             {
-                keypad[7] = 1;
+                user_keypad[7] = 1;
             }
             break;
 
             case SDLK_s:
             {
-                keypad[8] = 1;
+                user_keypad[8] = 1;
             }
             break;
 
             case SDLK_d:
             {
-                keypad[9] = 1;
+                user_keypad[9] = 1;
             }
             break;
 
             case SDLK_z:
             {
-                keypad[0xA] = 1;
+                user_keypad[0xA] = 1;
             }
             break;
 
             case SDLK_c:
             {
-                keypad[0xB] = 1;
+                user_keypad[0xB] = 1;
             }
             break;
 
             case SDLK_4:
             {
-                keypad[0xC] = 1;
+                user_keypad[0xC] = 1;
             }
             break;
 
             case SDLK_r:
             {
-                keypad[0xD] = 1;
+                user_keypad[0xD] = 1;
             }
             break;
 
             case SDLK_f:
             {
-                keypad[0xE] = 1;
+                user_keypad[0xE] = 1;
             }
             break;
 
             case SDLK_v:
             {
-                keypad[0xF] = 1;
+                user_keypad[0xF] = 1;
             }
             break;
 
@@ -289,6 +300,11 @@ int g_poll()
                 speed = (speed - 1) ? speed > 1 : 0;
                 break;
             }
+            case SDLK_SPACE: {
+                prog_pause ^= 0x1;
+                print_state();
+                break;
+            }
             break;
             }
         }
@@ -300,97 +316,97 @@ int g_poll()
             {
             case SDLK_x:
             {
-                keypad[0] = 0;
+                user_keypad[0] = 0;
             }
             break;
 
             case SDLK_1:
             {
-                keypad[1] = 0;
+                user_keypad[1] = 0;
             }
             break;
 
             case SDLK_2:
             {
-                keypad[2] = 0;
+                user_keypad[2] = 0;
             }
             break;
 
             case SDLK_3:
             {
-                keypad[3] = 0;
+                user_keypad[3] = 0;
             }
             break;
 
             case SDLK_q:
             {
-                keypad[4] = 0;
+                user_keypad[4] = 0;
             }
             break;
 
             case SDLK_w:
             {
-                keypad[5] = 0;
+                user_keypad[5] = 0;
             }
             break;
 
             case SDLK_e:
             {
-                keypad[6] = 0;
+                user_keypad[6] = 0;
             }
             break;
 
             case SDLK_a:
             {
-                keypad[7] = 0;
+                user_keypad[7] = 0;
             }
             break;
 
             case SDLK_s:
             {
-                keypad[8] = 0;
+                user_keypad[8] = 0;
             }
             break;
 
             case SDLK_d:
             {
-                keypad[9] = 0;
+                user_keypad[9] = 0;
             }
             break;
 
             case SDLK_z:
             {
-                keypad[0xA] = 0;
+                user_keypad[0xA] = 0;
             }
             break;
 
             case SDLK_c:
             {
-                keypad[0xB] = 0;
+                user_keypad[0xB] = 0;
             }
             break;
 
             case SDLK_4:
             {
-                keypad[0xC] = 0;
+                user_keypad[0xC] = 0;
             }
             break;
 
             case SDLK_r:
             {
-                keypad[0xD] = 0;
+                user_keypad[0xD] = 0;
             }
             break;
 
             case SDLK_f:
             {
-                keypad[0xE] = 0;
+                user_keypad[0xE] = 0;
             }
             break;
 
             case SDLK_v:
             {
-                keypad[0xF] = 0;
+                user_keypad[0xF] = 0;
             }
             break;
             }
@@ -766,7 +782,7 @@ void op_Dxyn()
 void op_Ex9E()
 {
     uint8_t x = (opcode & 0xF00u) >> 8;
-    if (keypad[registers[x]])
+    if (user_keypad[registers[x]])
     {
         program_counter += 2;
     }
@@ -776,7 +792,7 @@ void op_Ex9E()
 void op_ExA1()
 {
     uint8_t x = (opcode & 0xF00u) >> 8;
-    if (!keypad[registers[x]])
+    if (!user_keypad[registers[x]])
     {
         program_counter += 2;
     }
@@ -795,14 +811,14 @@ void op_Fx0A()
     uint8_t x = (opcode & 0xF00u) >> 8;
     for (int i = 0; i < 16; i++)
     {
-        if (keypad[i])
+        if (user_keypad[i])
         {
             // key is pressed so we can store its value in x
             registers[x] = (uint8_t)i;
             return;
         }
     }
-    // if no keypad are pressed we can
+    // if no user_keypad are pressed we can
     // effectively sleep by decrementing the pc by 2
     // causing this instruction to run again next cycle
     program_counter -= 2;
@@ -973,6 +989,8 @@ void cycle()
     opcode = (main_mem[program_counter] << 8) | main_mem[program_counter + 1];
     program_counter += 2;
     
+    print_state();
+
     // execute the opcode
     (*main_table[(opcode & 0xF000) >> 12])();
 
@@ -991,7 +1009,7 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        printf("Must provide rom as first argument\n");
+        printf("Must provide rom as first argument!\n");
         return 1;
     }
     // set seed for rand
@@ -1007,16 +1025,30 @@ int main(int argc, char *argv[])
     // get graphics ready
     g_init();
 
+    // initialize debugger
+
+    initscr();
+    scrollok(stdscr, 1);
+    setscrreg(0, 27);
+    refresh();
+
+    print_state();
+
+
     int quit = 0;
     while (!quit)
     {
         quit = g_poll();
-        cycle();
-        g_draw();
-        SDL_Delay(speed);
+        if (!prog_pause) {
+            cycle();
+            g_draw();
+            SDL_Delay(speed);
+        }
     }
 
     g_cleanup();
+
+    endwin();
 
     return 0;
 }

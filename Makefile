@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -g -Wall -Wextra -Wpedantic
 OBJS= chip8.c
-LINKER_FLAGS = -lSDL2
+LINKER_FLAGS = -lSDL2 -lncurses
 OBJ_NAME = chip8 
 
 all: $(OBJS)

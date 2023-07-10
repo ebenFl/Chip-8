@@ -30,20 +30,21 @@ The keyboard for the chip-8 is a 16 key hexadecimal keyboard with the following 
     +-+-+-+-+    +-+-+-+-+
 
 <p>
-It is also important to note that different programs for the chip-8 run at different clock cycle speeds. I have allowed the user to mess with the system speed by pressing f1 (slowdown) and f2 (speedup).<br><br>
-I have provided some roms in the rom folder but I encourage you to checkout some of the roms at<br>
+It is also important to note that different programs for the chip-8 were intended to be run at different system speeds. I have allowed the user to mess with the system speed by pressing f1 (slowdown) and f2 (speedup).<br>
 <p>
 
-*https://johnearnest.github.io/chip8Archive/*
-
 <p>
-    Please make sure that the platform listed is chip8 and not any chip8 extensions such as the superchip8.
+I have provided some game roms, random program roms, and the test roms I used in development. Currently my emulator seems to work with a majority of roms. Some roms however give my emulator issues and I have not completely tracked down the source of this issue yet but I believe that it has to do with different roms relying on slight variations in chip8 behavior across different implimentations (flag behavior, sprite wrap-around / clipping behavior, ... ). I would like to investigate these issues but I think that writing the emulator in a different language might be more fruitful and allow me to create a cleaner visual representation.
 <p>
 
 
 <p>
-To run the emulator you will need SDL2 intalled on your system and the gcc compiler. I have provided a makefile for compilation. To run the program execute
+To run the emulator you will need SDL2 intalled on your system and the gcc compiler. You will additionally need to have ncurses on your system. This is included with most linux distros. I have provided a makefile for compilation. To run the program execute
 <p>
 
 ---
 ./chip8 *romfile*
+
+---
+
+![](docs/blinky.gif)
